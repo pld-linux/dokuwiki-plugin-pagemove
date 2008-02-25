@@ -1,0 +1,77 @@
+--- pagemove/admin.php	2008-02-25 19:03:30.679918614 +0200
++++ pagemove/admin.php	2008-02-25 22:29:07.427283018 +0200
+@@ -213,24 +213,36 @@
+           saveWikiText($opts['new_id'], $this->text,
+             sprintf($this->lang[$lang_key], $ID, $opts['new_id']));
+ 
+-          //Delete the orginal file.
+-          //saveWikiText($ID, '', $this->lang['pm_movedto'].$opts['new_id']);
+           if (@file_exists(wikiFN($opts['new_id']))) @unlink(wikiFN($ID));
+ 
+-          //Loop through backlinks
++          // replace our old id with new one as we already renamed the page but 
++          // there might be backlinks (links to self in this case).
++          $opts['id'] = cleanID($opts['ns'].':'.$opts['name']);
++          $selfmod = isset($backlinks[$opts['id']]);
++          if ($selfmod) {
++            $backlinks[$opts['new_id']] = $backlinks[$opts['id']];
++            unset($backlinks[$opts['id']]);
++          }
++
++          // Loop through backlinks
+           foreach($backlinks as $backlink => $links){
+-            $this->_pm_updatebacklinks($backlink, $links, $opts, $brackets);
++            $this->_pm_updatebacklinks($backlink, $links, $opts);
+           }
+ 
+           //Move the old revisions
+           $this->_pm_movemeta('olddir', '/^'.$opts['name'].'\.[0-9]{10}\.txt(\.gz)?$/', $opts);
+ 
+-          //Set things up to display the new page.
++          // remove cache. again if we ourselves were modified (due backlinks)
++          if ($selfmod) {
++            $cache = new cache_instructions($opts['new_id'], wikiFN($opts['new_id']));
++            $cache->removeCache();
++          }
++
+           io_saveFile($conf['cachedir'].'/purgefile',time());
+-          $ID = $opts['new_id'];
+-          $ACT = 'show';
+-          $INFO = pageinfo();
+-          $this->show_form = false;
++
++          // redirect to page display
++          Header("Location: ".wl($opts['new_id']));
++          exit;
+         }
+       }
+     }
+@@ -352,7 +364,7 @@
+      *
+      * @author  Gary Owen <gary@isection.co.uk>
+      */
+-    function _pm_updatebacklinks($id, $links, $opts, &$brackets)
++    function _pm_updatebacklinks($id, $links, $opts)
+     {
+       global $ID;
+ 
+@@ -398,8 +410,8 @@
+       //Make the changes
+       $this->_pm_updatelinks($text, $oid);
+ 
+-      //Save backlink and release lock
+-      saveWikiText($id, $text, sprintf($this->lang['pm_linkchange'], $ID, $opts['new_id']));
++      //Save backlink and release lock. call the edit minor to avoid mail flood on marge backlinks changes
++      saveWikiText($id, $text, sprintf($this->lang['pm_linkchange'], $ID, $opts['new_id']), 1);
+       unlock($id);
+     }
+ 
+@@ -627,4 +639,6 @@
+       }
+     }
+ 
+-}
+\ No newline at end of file
++}
++
++// vim:set ts=2 et sw=2
