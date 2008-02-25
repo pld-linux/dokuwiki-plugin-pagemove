@@ -1,0 +1,55 @@
+--- pagemove/admin.php	2008-02-25 19:02:48.062065053 +0200
++++ pagemove/admin.php	2008-02-25 19:01:41.271159305 +0200
+@@ -411,7 +411,8 @@
+     function _pm_updatelinks(&$text, $links)
+     {
+       foreach( $links as $old => $new ) {
+-        $text = preg_replace( '#\[\[' . $old . '((\]\])|[\|\#])#i', '[[' . $new . '\1', $text);
++        $text = preg_replace( '#\[\[' . $old . '(\]\]|[\|\#])#i', '[[' . $new . '\1', $text);
++        $text = preg_replace( '#~~REDIRECT>' . $old . '(~~|[\|\#])#i', '~~REDIRECT>' . $new . '\1', $text);
+       }
+     }
+ 
+@@ -440,7 +441,14 @@
+       //match all links
+       //FIXME may be incorrect because of code blocks
+       //      CamelCase isn't supported, too
+-      preg_match_all('#\[\[(.+?)\]\]#si',$text,$matches,PREG_SET_ORDER);
++      $matches = array();
++      if (preg_match_all('#\[\[(.+?)\]\]#s',$text,$m,PREG_SET_ORDER)) {
++        $matches = array_merge($matches, $m);
++      }
++      if (preg_match_all('#~~REDIRECT>(.+?)~~#s',$text,$m,PREG_SET_ORDER)) {
++        $matches = array_merge($matches, $m);
++      }
++
+       foreach($matches as $match){
+         //get ID from link and discard most non wikilinks
+         list($mid) = split('[\|#]',$match[1],2);
+@@ -572,9 +580,9 @@
+      */
+     function _pm_search_backlinks(&$data,$base,$file,$type,$lvl,$opts){
+       //we do nothing with directories
+-      if($type == 'd') return true;;
++      if($type == 'd') return true;
+       //only search txt files
+-      if(!preg_match('#\.txt$#',$file)) return true;;
++      if(!preg_match('#\.txt$#',$file)) return true;
+     
+       //get text
+       $text = io_readfile($base.'/'.$file);
+@@ -589,7 +597,13 @@
+       //match all links
+       //FIXME may be incorrect because of code blocks
+       //      CamelCase isn't supported, too
+-      preg_match_all('#\[\[(.+?)\]\]#si',$text,$matches,PREG_SET_ORDER);
++      $matches = array();
++      if (preg_match_all('#\[\[(.+?)\]\]#s',$text,$m,PREG_SET_ORDER)) {
++        $matches = array_merge($matches, $m);
++      }
++      if (preg_match_all('#~~REDIRECT>(.+?)~~#s',$text,$m,PREG_SET_ORDER)) {
++        $matches = array_merge($matches, $m);
++      }
+       foreach($matches as $match){
+         //get ID from link and discard most non wikilinks
+         list($mid) = split('[\|#]',$match[1],2);
