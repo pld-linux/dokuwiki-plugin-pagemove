@@ -1,15 +1,12 @@
---- pagemove/admin.php	2008-02-25 19:03:30.679918614 +0200
-+++ pagemove/admin.php	2008-02-25 22:29:07.427283018 +0200
-@@ -213,24 +213,36 @@
-           saveWikiText($opts['new_id'], $this->text,
-             sprintf($this->lang[$lang_key], $ID, $opts['new_id']));
- 
--          //Delete the orginal file.
--          //saveWikiText($ID, '', $this->lang['pm_movedto'].$opts['new_id']);
-           if (@file_exists(wikiFN($opts['new_id']))) @unlink(wikiFN($ID));
- 
--          //Loop through backlinks
-+          // replace our old id with new one as we already renamed the page but 
+--- pagemove/admin.php~	2010-03-22 15:48:44.000000000 +0200
++++ pagemove/admin.php	2010-03-22 15:52:23.529214700 +0200
+@@ -600,22 +600,36 @@
+           //saveWikiText($ID, '', $this->lang['pm_movedto'].$opts['new_id']);
+           //if (@file_exists(wikiFN($opts['new_id']))) @unlink(wikiFN($ID));
+           if (@file_exists(wikiFN($opts['new_id']))) saveWikiText($ID, '',$this->lang['pm_delete'] );
+-            
++
++          // replace our old id with new one as we already renamed the page but
 +          // there might be backlinks (links to self in this case).
 +          $opts['id'] = cleanID($opts['ns'].':'.$opts['name']);
 +          $selfmod = isset($backlinks[$opts['id']]);
@@ -17,23 +14,23 @@
 +            $backlinks[$opts['new_id']] = $backlinks[$opts['id']];
 +            unset($backlinks[$opts['id']]);
 +          }
-+
-+          // Loop through backlinks
+           
+           //Loop through backlinks
            foreach($backlinks as $backlink => $links){
 -            $this->_pm_updatebacklinks($backlink, $links, $opts, $brackets);
 +            $this->_pm_updatebacklinks($backlink, $links, $opts);
            }
- 
+           
            //Move the old revisions
            $this->_pm_movemeta('olddir', '/^'.$opts['name'].'\.[0-9]{10}\.txt(\.gz)?$/', $opts);
  
--          //Set things up to display the new page.
 +          // remove cache. again if we ourselves were modified (due backlinks)
 +          if ($selfmod) {
 +            $cache = new cache_instructions($opts['new_id'], wikiFN($opts['new_id']));
 +            $cache->removeCache();
 +          }
 +
+           //Set things up to display the new page.
            io_saveFile($conf['cachedir'].'/purgefile',time());
 -          $ID = $opts['new_id'];
 -          $ACT = 'show';
@@ -66,12 +63,3 @@
        unlock($id);
      }
  
-@@ -627,4 +639,6 @@
-       }
-     }
- 
--}
-\ No newline at end of file
-+}
-+
-+// vim:set ts=2 et sw=2
