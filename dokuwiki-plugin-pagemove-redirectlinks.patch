@@ -1,57 +1,58 @@
---- pagemove/admin.php~	2010-03-22 15:40:57.000000000 +0200
-+++ pagemove/admin.php	2010-03-22 15:42:35.999975148 +0200
-@@ -698,7 +698,8 @@
-     function _pm_updatelinks(&$text, $links)
-     {
-       foreach( $links as $old => $new ) {
--        $text = preg_replace( '#\[\[:?' . $old . '((\]\])|[\|\#])#i', '[[' . $new . '\1', $text);
-+        $text = preg_replace( '#\[\[:?' . $old . '(\]\]|[\|\#])#i', '[[' . $new . '\1', $text);
-+        $text = preg_replace( '#~~REDIRECT>' . $old . '(~~|[\|\#])#i', '~~REDIRECT>' . $new . '\1', $text);
-       }
+--- dokuwiki-plugin-pagemove-20110811/admin.php~	2012-06-12 23:38:07.000000000 +0300
++++ dokuwiki-plugin-pagemove-20110811/admin.php	2012-06-12 23:47:42.513225196 +0300
+@@ -742,7 +742,8 @@
+      */
+     function _pm_updatelinks(&$text, $links) {
+         foreach( $links as $old => $new ) {
+-            $text = preg_replace( '#\[\[:?' . $old . '((\]\])|[\|\#])#i', '[[' . $new . '\1', $text);
++            $text = preg_replace( '#\[\[:?' . $old . '(\]\]|[\|\#])#i', '[[' . $new . '\1', $text);
++            $text = preg_replace( '#~~REDIRECT>' . $old . '(~~|[\|\#])#i', '~~REDIRECT>' . $new . '\1', $text);
+         }
      }
  
-@@ -440,7 +441,14 @@
-       //match all links
-       //FIXME may be incorrect because of code blocks
-       //      CamelCase isn't supported, too
--      preg_match_all('#\[\[(.+?)\]\]#si',$text,$matches,PREG_SET_ORDER);
-+      $matches = array();
-+      if (preg_match_all('#\[\[(.+?)\]\]#s',$text,$m,PREG_SET_ORDER)) {
-+        $matches = array_merge($matches, $m);
-+      }
-+      if (preg_match_all('#~~REDIRECT>(.+?)~~#s',$text,$m,PREG_SET_ORDER)) {
-+        $matches = array_merge($matches, $m);
-+      }
+@@ -772,7 +772,14 @@
+         // match all links
+         // FIXME may be incorrect because of code blocks
+         // TODO CamelCase isn't supported, too
+-        preg_match_all('#\[\[(.+?)\]\]#si', $text, $matches, PREG_SET_ORDER);
++        $matches = array();
++        if (preg_match_all('#\[\[(.+?)\]\]#s', $text, $m, PREG_SET_ORDER)) {
++            $matches = array_merge($matches, $m);
++        }
++        if (preg_match_all('#~~REDIRECT>(.+?)~~#s', $text, $m, PREG_SET_ORDER)) {
++            $matches = array_merge($matches, $m);
++        }
 +
-       foreach($matches as $match){
-         //get ID from link and discard most non wikilinks
-         list($mid) = split('[\|#]',$match[1],2);
-@@ -572,9 +580,9 @@
-      */
-     function _pm_search_backlinks(&$data,$base,$file,$type,$lvl,$opts){
-       //we do nothing with directories
--      if($type == 'd') return true;;
-+      if($type == 'd') return true;
-       //only search txt files
--      if(!preg_match('#\.txt$#',$file)) return true;;
-+      if(!preg_match('#\.txt$#',$file)) return true;
-     
-       //get text
-       $text = io_readfile($base.'/'.$file);
---- pagemove/admin.php~	2010-03-22 15:44:35.000000000 +0200
-+++ pagemove/admin.php	2010-03-22 15:45:49.644880286 +0200
-@@ -770,7 +770,13 @@
-       //match all links
-       //FIXME may be incorrect because of code blocks
-       //      CamelCase isn't supported, too
--      preg_match_all('#{{(.[^>]+?)}}#si',$text,$matches,PREG_SET_ORDER);
-+      $matches = array();
-+	  if (preg_match_all('#{{(.[^>]+?)}}#si',$text,$matches,PREG_SET_ORDER)) {
-+        $matches = array_merge($matches, $m);
-+	  }
-+      if (preg_match_all('#~~REDIRECT>(.+?)~~#s',$text,$m,PREG_SET_ORDER)) {
-+        $matches = array_merge($matches, $m);
-+      }
-       foreach($matches as $match){
-         //get ID from link and discard most non wikilinks
-         list($mid) = split('(\?|\|)',$match[1],2);
+         foreach($matches as $match) {
+             // ignore local headings [[#some_heading]]
+             if ( preg_match('/^#/', $match[1])) continue;
+@@ -819,7 +819,13 @@
+         // match all links
+         // FIXME may be incorrect because of code blocks
+         // TODO CamelCase isn't supported, too
+-        preg_match_all('#{{(.[^>]+?)}}#si', $text, $matches, PREG_SET_ORDER);
++        $matches = array();
++        if (preg_match_all('#{{(.[^>]+?)}}#si', $text, $m, PREG_SET_ORDER)) {
++            $matches = array_merge($matches, $m);
++        }
++        if (preg_match_all('#~~REDIRECT>(.+?)~~#s', $text, $m, PREG_SET_ORDER)) {
++            $matches = array_merge($matches, $m);
++        }
+         foreach($matches as $match) {
+             // get ID from link and discard most non wikilinks
+             list($mid) = split('(\?|\|)', $match[1], 2);
+@@ -947,7 +947,13 @@
+         // match all links
+         // FIXME may be incorrect because of code blocks
+         // FIXME CamelCase isn't supported, too
+-        preg_match_all('#\[\[(.+?)\]\]#si', $text, $matches, PREG_SET_ORDER);
++        $matches = array();
++        if (preg_match_all('#\[\[(.+?)\]\]#s', $text, $m, PREG_SET_ORDER)) {
++            $matches = array_merge($matches, $m);
++        }
++        if (preg_match_all('#~~REDIRECT>(.+?)~~#s', $text, $m, PREG_SET_ORDER)) {
++            $matches = array_merge($matches, $m);
++        }
+         foreach($matches as $match) {
+             // get ID from link and discard most non wikilinks
+             list($matchLink) = split('[\|#]', $match[1], 2);

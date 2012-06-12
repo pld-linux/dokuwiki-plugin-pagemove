@@ -2,15 +2,15 @@
 Summary:	DokuWiki PageMove plugin
 Summary(pl.UTF-8):	Wtyczka PageMove dla DokuWiki
 Name:		dokuwiki-plugin-%{plugin}
-Version:	0.10.0
+Version:	20110811
 Release:	1
 License:	GPL v2
 Group:		Applications/WWW
-Source0:	http://acodeas.de/plugins/Version%{version}-pagemove_20100218.zip
-# Source0-md5:	48d2d8dde2794a9a5af5344623d608e8
+Source0:	http://github.com/desolat/DokuWiki-Pagemove-Plugin/tarball/master/%{plugin}-%{version}.tgz
+# Source0-md5:	eff88e845739a9052ac9620d8d2a5056
 Patch0:		%{name}-redirectlinks.patch
 Patch1:		%{name}-selflinks.patch
-URL:		http://www.isection.co.uk/doku.php
+URL:		http://www.dokuwiki.org/plugin:pagemove
 BuildRequires:	sed >= 4.0
 BuildRequires:	unzip
 Requires:	dokuwiki >= 20060309
@@ -42,9 +42,10 @@ W zupełności można:
 - wykonać połączenie powyższych.
 
 %prep
-%setup -q -n %{plugin}
-# undos the source
-%{__sed} -i -e 's,\r$,,' admin.php
+%setup -qc
+mv *-DokuWiki-Pagemove-Plugin-*/* .
+rm -f *-DokuWiki-Pagemove-Plugin-*/.git*
+%undos -f php
 
 %patch0 -p1
 %patch1 -p1
@@ -60,19 +61,18 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{plugindir}
 cp -a . $RPM_BUILD_ROOT%{plugindir}
 
+%{__rm} $RPM_BUILD_ROOT%{plugindir}/README
+%{__rm} -r $RPM_BUILD_ROOT%{plugindir}/_test
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%post
-# force css cache refresh
-if [ -f %{dokuconf}/local.php ]; then
-	touch %{dokuconf}/local.php
-fi
-
 %files
 %defattr(644,root,root,755)
+%doc README
 %dir %{plugindir}
-%{plugindir}/admin.php
+%{plugindir}/*.php
+%{plugindir}/*.txt
 %dir %{plugindir}/lang
 %{plugindir}/lang/en
 %lang(cs) %{plugindir}/lang/cs

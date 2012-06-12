@@ -1,65 +1,67 @@
---- pagemove/admin.php~	2010-03-22 15:48:44.000000000 +0200
-+++ pagemove/admin.php	2010-03-22 15:52:23.529214700 +0200
-@@ -600,22 +600,36 @@
-           //saveWikiText($ID, '', $this->lang['pm_movedto'].$opts['new_id']);
-           //if (@file_exists(wikiFN($opts['new_id']))) @unlink(wikiFN($ID));
-           if (@file_exists(wikiFN($opts['new_id']))) saveWikiText($ID, '',$this->lang['pm_delete'] );
--            
+--- dokuwiki-plugin-pagemove-20110811/admin.php~	2012-06-12 23:48:17.000000000 +0300
++++ dokuwiki-plugin-pagemove-20110811/admin.php	2012-06-12 23:50:28.916910665 +0300
+@@ -370,10 +370,10 @@
+ 
+             // Set things up to display the new page.
+             io_saveFile($conf['cachedir'].'/purgefile', time());
+-            $ID = $opts['new_id'];
+-            $ACT = 'show';
+-            $INFO = pageinfo();
+-            $this->show_form = false;
 +
-+          // replace our old id with new one as we already renamed the page but
-+          // there might be backlinks (links to self in this case).
-+          $opts['id'] = cleanID($opts['ns'].':'.$opts['name']);
-+          $selfmod = isset($backlinks[$opts['id']]);
-+          if ($selfmod) {
++            // redirect to page display
++            Header("Location: ".wl($opts['new_id']));
++            exit;
+         }
+         else {
+             $this->errors[] = $this->lang['pm_fatal'];
+@@ -618,14 +618,28 @@
+         	saveWikiText($ID, '', $this->lang['pm_delete'] );
+         }
+ 
++        // replace our old id with new one as we already renamed the page but
++        // there might be backlinks (links to self in this case).
++        $opts['id'] = cleanID($opts['ns'].':'.$opts['name']);
++        $selfmod = isset($backlinks[$opts['id']]);
++        if ($selfmod) {
 +            $backlinks[$opts['new_id']] = $backlinks[$opts['id']];
 +            unset($backlinks[$opts['id']]);
-+          }
-           
-           //Loop through backlinks
-           foreach($backlinks as $backlink => $links){
--            $this->_pm_updatebacklinks($backlink, $links, $opts, $brackets);
-+            $this->_pm_updatebacklinks($backlink, $links, $opts);
-           }
-           
-           //Move the old revisions
-           $this->_pm_movemeta('olddir', '/^'.$opts['name'].'\.[0-9]{10}\.txt(\.gz)?$/', $opts);
++        }
++
+         // Loop through backlinks
+         foreach($backlinksById as $backlinkingId => $backlinks) {
+-            $this->_pm_updatebacklinks($backlinkingId, $backlinks, $opts, $brackets);
++            $this->_pm_updatebacklinks($backlinkingId, $backlinks, $opts);
+         }
  
-+          // remove cache. again if we ourselves were modified (due backlinks)
-+          if ($selfmod) {
+         // Move the old revisions
+         $this->_pm_movemeta('olddir', '/^'.$opts['name'].'\.[0-9]{10}\.txt(\.gz)?$/', $opts);
+ 
++        // remove cache. again if we ourselves were modified (due backlinks)
++        if ($selfmod) {
 +            $cache = new cache_instructions($opts['new_id'], wikiFN($opts['new_id']));
 +            $cache->removeCache();
-+          }
-+
-           //Set things up to display the new page.
-           io_saveFile($conf['cachedir'].'/purgefile',time());
--          $ID = $opts['new_id'];
--          $ACT = 'show';
--          $INFO = pageinfo();
--          $this->show_form = false;
-+
-+          // redirect to page display
-+          Header("Location: ".wl($opts['new_id']));
-+          exit;
-         }
-       }
++        }
      }
-@@ -352,7 +364,7 @@
+ 
+ 
+@@ -637,7 +637,7 @@
       *
       * @author  Gary Owen <gary@isection.co.uk>
       */
--    function _pm_updatebacklinks($id, $links, $opts, &$brackets)
-+    function _pm_updatebacklinks($id, $links, $opts)
-     {
-       global $ID;
+-    function _pm_updatebacklinks($backlinkingId, $links, $opts, &$brackets) {
++    function _pm_updatebacklinks($backlinkingId, $links, $opts) {
+         global $ID;
  
-@@ -398,8 +410,8 @@
-       //Make the changes
-       $this->_pm_updatelinks($text, $oid);
+         // Get namespace of document we are editing
+@@ -730,8 +730,8 @@
+         // Make the changes
+         $this->_pm_updatelinks($text, $oid);
  
--      //Save backlink and release lock
--      saveWikiText($id, $text, sprintf($this->lang['pm_linkchange'], $ID, $opts['new_id']));
-+      //Save backlink and release lock. call the edit minor to avoid mail flood on marge backlinks changes
-+      saveWikiText($id, $text, sprintf($this->lang['pm_linkchange'], $ID, $opts['new_id']), 1);
-       unlock($id);
+-        // Save backlink and release lock
+-        saveWikiText($backlinkingId, $text, sprintf($this->lang['pm_linkchange'], $ID, $opts['new_id']));
++        // Save backlink and release lock. call the edit minor to avoid mail flood on marge backlinks changes
++        saveWikiText($backlinkingId, $text, sprintf($this->lang['pm_linkchange'], $ID, $opts['new_id']), 1);
+         unlock($backlinkingId);
      }
  
