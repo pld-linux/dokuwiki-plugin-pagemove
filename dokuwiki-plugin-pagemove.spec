@@ -2,18 +2,16 @@
 Summary:	DokuWiki PageMove plugin
 Summary(pl.UTF-8):	Wtyczka PageMove dla DokuWiki
 Name:		dokuwiki-plugin-%{plugin}
-Version:	20110811
-Release:	1
+Version:	20130125
+Release:	0.1
 License:	GPL v2
 Group:		Applications/WWW
-Source0:	http://github.com/desolat/DokuWiki-Pagemove-Plugin/tarball/master/%{plugin}-%{version}.tgz
-# Source0-md5:	eff88e845739a9052ac9620d8d2a5056
-Patch0:		%{name}-redirectlinks.patch
-Patch1:		%{name}-selflinks.patch
+Source0:	https://github.com/michitux/DokuWiki-Pagemove-Plugin/archive/master.tar.gz?/%{plugin}-%{version}.tgz
+# Source0-md5:	7224d4641568b766299be6a29688d134
 URL:		http://www.dokuwiki.org/plugin:pagemove
 BuildRequires:	sed >= 4.0
 BuildRequires:	unzip
-Requires:	dokuwiki >= 20060309
+Requires:	dokuwiki >= 20120919
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -43,15 +41,8 @@ W zupełności można:
 
 %prep
 %setup -qc
-mv *-DokuWiki-Pagemove-Plugin-*/* .
-rm -f *-DokuWiki-Pagemove-Plugin-*/.git*
-%undos -f php
-
-%patch0 -p1
-%patch1 -p1
-mv lang/cs/pagemove.txt{.txt,}
-mv lang/es/pagemove.txt{.txt,}
-mv lang/pl/pagemove.txt{.txt,}
+mv DokuWiki-Pagemove-Plugin-*/* .
+%{__rm} DokuWiki-Pagemove-Plugin-*/.git*
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
@@ -73,6 +64,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{plugindir}
 %{plugindir}/*.php
 %{plugindir}/*.txt
+%{plugindir}/*.js
 %dir %{plugindir}/lang
 %{plugindir}/lang/en
 %lang(cs) %{plugindir}/lang/cs
